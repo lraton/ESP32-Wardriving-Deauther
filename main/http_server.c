@@ -45,8 +45,6 @@ static const httpd_uri_t root = {
     .uri       = "/",
     .method    = HTTP_GET,
     .handler   = main_page_handler,
-    /* Let's pass response string in user
-     * context to demonstrate it's usage */
     .user_ctx  = "<!DOCTYPE html>\
 <html>\
 <head>\
@@ -92,8 +90,7 @@ static void stop_webserver(httpd_handle_t server)
     httpd_stop(server);
 }
 
-static void disconnect_handler(void* arg, esp_event_base_t event_base,
-                               int32_t event_id, void* event_data)
+static void disconnect_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void* event_data)
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
     if (*server) {
@@ -103,8 +100,7 @@ static void disconnect_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-static void connect_handler(void* arg, esp_event_base_t event_base,
-                            int32_t event_id, void* event_data)
+static void connect_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void* event_data)
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
     if (*server == NULL) {
