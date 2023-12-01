@@ -1,4 +1,4 @@
-menu "Example Configuration"
+menu "SoftAP-Station Configuration"
 
     menu "SoftAP Configuration"
         comment "SoftAP Configuration"

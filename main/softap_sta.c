@@ -205,8 +205,8 @@ void start_ap_sta(void)
     esp_netif_t *esp_netif_ap = wifi_init_softap();
 
     /* Initialize STA */
-   // ESP_LOGI(TAG_STA, "ESP_WIFI_MODE_STA");
-    //esp_netif_t *esp_netif_sta = wifi_init_sta();
+    ESP_LOGI(TAG_STA, "ESP_WIFI_MODE_STA");
+    esp_netif_t *esp_netif_sta = wifi_init_sta();
 
     /* Start WiFi */
     ESP_ERROR_CHECK(esp_wifi_start());
