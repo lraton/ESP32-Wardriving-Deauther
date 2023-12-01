@@ -168,7 +168,7 @@ esp_netif_t *wifi_init_sta(void)
 void start_ap_sta(void)
 {
     ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    //ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     // Initialize NVS
     esp_err_t ret = nvs_flash_init();

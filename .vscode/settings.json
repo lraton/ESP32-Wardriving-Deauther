@@ -1,3 +1,10 @@
 {
-    "idf.adapterTargetName": "esp32"
+    "idf.portWin": "COM5",
+    "idf.adapterTargetName": "esp32",
+    "idf.flashType": "UART",
+    "cmake.configureOnOpen": true,
+    "files.associations": {
+        "*.module": "php",
+        "esp_netif.h": "c"
+    }
 }
