@@ -16,7 +16,7 @@ extern "C" {
 PacketSender sender;
 wifi_ap_record_t *apRecords;
 //esp_err_t esp_wifi_set_mac(wifi_interface_t ifx, const uint8_t mac[6])
-/*void spoof_MAC(MacAddr* pMAC ){
+void spoofMAC(MacAddr* pMAC ){
     //apple 98:ca:33
     unsigned char gay[3];
     for(int i = 0; i <3 ;i++){
@@ -25,11 +25,11 @@ wifi_ap_record_t *apRecords;
 
 
     for(int i =0 ; i<3 ;i++){
-        pMAC[3+i] = gay[i];
+        (*pMAC)[3+i] = gay[i];
     }
         
 
-}*/
+}
 
 //esp_err_t esp_wifi_scan_start(const wifi_scan_config_t *config, bool block)
 //esp_err_t esp_wifi_scan_stop(void)
@@ -52,7 +52,8 @@ void spam_task(void *pvParameter) {
         //98:ca:33
         0x98, 0xca, 0x33, 0x32, 0x65, 0xe4
     };
-    //spoof_MAC(&AP);
+    spoofMAC(&AP);
+    //ESP_ERROR_CHECK(esp_wifi_set_mac(,AP));
     scanWifi();
     
 	while(1) {
