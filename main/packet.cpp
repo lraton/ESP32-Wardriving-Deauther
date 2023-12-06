@@ -1,9 +1,11 @@
 #include <cstring>
 #include "packet.hpp"
-
+#include "esp_log.h"
 extern "C" {
 #include "configure_wifi.h"
 } 
+#define TASK_NAME "spam_task"
+
 
 esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq);
 
@@ -103,9 +105,14 @@ const uint8_t beaconPacket[109] = {
 esp_err_t PacketSender::deauth(const MacAddr ap, const MacAddr station,
         const MacAddr bssid, uint8_t reason, uint8_t channel) {
     
+    ESP_LOGI(TASK_NAME, "(dentro deauth) prima di change_channel");
+
     esp_err_t res = change_channel(channel);
-    if(res != ESP_OK) return res;
-    
+    ESP_LOGI(TASK_NAME, "(dentro deauth) dopo change_channel");
+
+    if(res != ESP_OK){
+        return res;
+    }
     memcpy(buffer, deauthPacket, sizeof(deauthPacket));
 
     memcpy(&buffer[4], ap, 6);
@@ -116,8 +123,14 @@ esp_err_t PacketSender::deauth(const MacAddr ap, const MacAddr station,
 
     seqnum++;
 
+    ESP_LOGI(TASK_NAME, "(dentro deauth) prima di raw");
+
     res = raw(buffer, sizeof(deauthPacket));
-    if(res == ESP_OK) return ESP_OK;
+    ESP_LOGI(TASK_NAME, "(dentro deauth) dopo raw()");
+
+    if(res == ESP_OK){
+        return ESP_OK;
+    }
     buffer[0] = 0xa0;
     return raw(buffer, sizeof(deauthPacket));
 }
@@ -164,7 +177,7 @@ esp_err_t PacketSender::probe(const MacAddr mac, const char* ssid,
 }
 
 esp_err_t PacketSender::raw(const uint8_t* packet, int32_t len, bool en_sys_seq) {
-    return esp_wifi_80211_tx(WIFI_IF_AP, packet, len, en_sys_seq);
+    return esp_wifi_80211_tx(WIFI_IF_STA, packet, len, en_sys_seq);
 }
 
 esp_err_t PacketSender::change_channel(uint8_t channel) {

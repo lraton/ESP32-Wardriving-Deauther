@@ -3,9 +3,9 @@
 esp_err_t esp32_deauther_configure_wifi(uint8_t channel) {
     wifi_config_t ap_config = {
         .ap = {
-            .ssid = "https://owo.sh/8AkjqRL",
+            .ssid = "ciaociao",
             .ssid_len = 22,
-            .password = "https://owo.sh/4Ai3g47",
+            .password = "hello",
             .channel = channel,
             .authmode = WIFI_AUTH_WPA2_PSK,
             .ssid_hidden = 0,
