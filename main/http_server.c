@@ -41,6 +41,19 @@ static esp_err_t main_page_handler(httpd_req_t *req)
 	return error;
 }
 
+static esp_err_t download_page_handler(httpd_req_t *req)
+{
+	esp_err_t error;
+	const char *response = (const char *) req->user_ctx;
+	error = httpd_resp_send(req, response, strlen(response));
+	if (error != ESP_OK)
+	{
+		ESP_LOGI(TAG, "Error %d while sending Response", error);
+	}
+	else ESP_LOGI(TAG, "Response sent Successfully");
+	return error;
+}
+
 static const httpd_uri_t root = {
     .uri       = "/",
     .method    = HTTP_GET,
@@ -52,7 +65,23 @@ static const httpd_uri_t root = {
 <body>\
 \
 <h1>ESP32 WEBSERVER</h1>\
-<p>Hello</p>\
+<a href="download">Download</a>\
+</body>\
+</html>"
+};
+
+static const httpd_uri_t download = {
+    .uri       = "/download",
+    .method    = HTTP_GET,
+    .handler   = download_page_handler,
+    .user_ctx  = "<!DOCTYPE html>\
+<html>\
+<head>\
+</head>\
+<body>\
+\
+<h1>ESP32 WEBSERVER</h1>\
+ <a href="/">Ciao</a>\
 </body>\
 </html>"
 };
