@@ -65,7 +65,7 @@ static const httpd_uri_t root = {
 <body>\
 \
 <h1>ESP32 WEBSERVER</h1>\
-<a href="download">Download</a>\
+<a href=\"download\">Download</a>\
 </body>\
 </html>"
 };
@@ -81,7 +81,7 @@ static const httpd_uri_t download = {
 <body>\
 \
 <h1>ESP32 WEBSERVER</h1>\
- <a href="/">Ciao</a>\
+ <a href=\"/\">Ciao</a>\
 </body>\
 </html>"
 };
@@ -106,6 +106,7 @@ static httpd_handle_t start_webserver(void)
         // Set URI handlers
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &root);
+        httpd_register_uri_handler(server, &download);
         return server;
     }
 

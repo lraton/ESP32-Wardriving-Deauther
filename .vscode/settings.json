@@ -6,5 +6,6 @@
     "files.associations": {
         "*.module": "php",
         "esp_netif.h": "c"
-    }
+    },
+    "idf.port": "/dev/ttyUSB0"
 }
