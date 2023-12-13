@@ -102,7 +102,7 @@ const uint8_t beaconPacket[109] = {
     /* 107 - 108 */ 0x00, 0x00
 };
 
-esp_err_t PacketSender::deauth(const MacAddr ap, const MacAddr station,
+esp_err_t PacketSender::deauth(const MacAddr target, const MacAddr source,
         const MacAddr bssid, uint8_t reason, uint8_t channel) {
     
     ESP_LOGI(TASK_NAME, "(dentro deauth) prima di change_channel");
@@ -115,8 +115,8 @@ esp_err_t PacketSender::deauth(const MacAddr ap, const MacAddr station,
     }
     memcpy(buffer, deauthPacket, sizeof(deauthPacket));
 
-    memcpy(&buffer[4], ap, 6);
-    memcpy(&buffer[10], station, 6);
+    memcpy(&buffer[4], target, 6);
+    memcpy(&buffer[10], source , 6);
     memcpy(&buffer[16], bssid, 6);
     memcpy(&buffer[22], &seqnum, 2);
     buffer[24] = reason;
@@ -131,8 +131,9 @@ esp_err_t PacketSender::deauth(const MacAddr ap, const MacAddr station,
     if(res == ESP_OK){
         return ESP_OK;
     }
-    buffer[0] = 0xa0;
-    return raw(buffer, sizeof(deauthPacket));
+    return res;
+    //buffer[0] = 0xa0;
+    //return raw(buffer, sizeof(deauthPacket));
 }
 
 esp_err_t PacketSender::beacon(const MacAddr mac, const char* ssid,

