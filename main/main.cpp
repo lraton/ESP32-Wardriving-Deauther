@@ -194,6 +194,12 @@ void scanWifi(void *pvParameter){
     }
 }
 
+
+extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
+  return 0; //LA FUNZIONE IMPEDISCE DI MANDARE PACCHETTI "STRANI"
+}
+
+
 void deauth_task(MacAddr bssid, uint8_t prim_chan) {
 
     
@@ -242,7 +248,6 @@ extern "C" void app_main(void) {
 
     nvs_flash_init();
     esp_netif_init();    
-    void * func = ieee80211_raw_frame_sanity_check;
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
