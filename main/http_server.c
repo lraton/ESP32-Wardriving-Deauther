@@ -34,7 +34,7 @@ void generate_dynamic_html(char* dynamic_content);
 static esp_err_t main_page_handler(httpd_req_t *req)
 {
 	esp_err_t error;
-    char dynamic_content[10240];
+    char dynamic_content[2048];
     
     // Generate dynamic HTML content
     generate_dynamic_html(dynamic_content);
@@ -48,20 +48,18 @@ static esp_err_t main_page_handler(httpd_req_t *req)
 }
 
 void generate_dynamic_html(char* dynamic_content) {
-    // Simulated dynamic content based on variables
-    int variable1 = rand() % 100;
-    float variable2 = (float)rand() / RAND_MAX;
-    
     // Format the HTML dynamically based on variables
-    snprintf(dynamic_content, 10240,
-              "<html> <head> <style> table, th, td { width: 100%%; border: 1px solid black; } table { min-height:70vh ; font-size: 2em; } </style> </head> <body> <h1>ESP32 WEBSERVER</h1> <table> <tr> <th><a href=\"downloadwpa\">Download WPA</a></th> <th><a href=\"downloadwpa2\">Downalod WPA2</a></th> <th><a href=\"downloadall\">Download All</a></th> </tr> <br> <tr> <th>SSID</th> <th>HANDSHAKE</th> <th>AuthMode</th> <th>Coordinate</th> <th>Download</th> </tr>\
-<tr> <td>DIGOS furgone monitoraggio</td>\
-<td>è un piacere</td>\
-<td>VUPIA</td>\
-<td>x-y-z</td>\
-<td><a href=\"download\">Download %d %.2f</a></td> </tr>\
-</table> </body> </html>",
-             variable1, variable2);
+    snprintf(dynamic_content, 2048,
+              "<html> <head> <style> table, th, td { width: 100%%; border: 1px solid black; } table { min-height:70vh ; font-size: 2em; } </style> </head> <body> <h1>ESP32 WEBSERVER</h1> <table> <tr> <th><a href=\"downloadwpa\">Download WPA</a></th> <th><a href=\"downloadwpa2\">Downalod WPA2</a></th> <th><a href=\"downloadall\">Download All</a></th> </tr> <br> <tr> <th>SSID</th> <th>HANDSHAKE</th> <th>AuthMode</th> <th>Coordinate</th> <th>Download</th> </tr>");
+    for (int i=0; i<5;i++){
+        strcat(dynamic_content,"<tr>\
+            <td>DIGOS furgone monitoraggio</td>\
+            <td>è un piacere</td>\
+            <td>VUPIA</td>\
+            <td>x-y-z</td>\
+            <td><a href=\"download\">Download</a></td>\
+        </tr>");
+    }
 }
 
 static esp_err_t download_page_handler(httpd_req_t *req)
