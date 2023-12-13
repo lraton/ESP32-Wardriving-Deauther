@@ -151,7 +151,6 @@ void spoofMAC(MacAddr* pMAC ){
         
 
 }
-
 //esp_err_t esp_wifi_scan_start(const wifi_scan_config_t *config, bool block)
 //esp_err_t esp_wifi_scan_stop(void)
 //esp_err_t esp_wifi_scan_get_ap_records(uint16_t *number, wifi_ap_record_t *ap_records)
@@ -195,13 +194,21 @@ void scanWifi(void *pvParameter){
     }
 }
 
-
-
-
 void deauth_task(MacAddr bssid, uint8_t prim_chan) {
 
     
-    //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+ 
+
+        //.ap = {
+          //  .ssid = "Xiaomi 11T Pro",
+           // .ssid_len = 14,
+           // .password = "C@garella18",
+           // .channel = prim_chan,
+           // .authmode = WIFI_AUTH_WPA2_PSK,
+           /// .ssid_hidden = 0,
+           // .max_connection = 4,
+           // .beacon_interval = 60000
 
     const MacAddr TARGET = { //target broadcast
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
@@ -230,17 +237,12 @@ void deauth_task(MacAddr bssid, uint8_t prim_chan) {
 
 
 
-
-/*extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
-  return 0; //LA FUNZIONE IMPEDISCE DI MANDARE PACCHETTI "STRANI"
-}*/
-
 extern "C" void app_main(void) {
     srand(time(NULL));
 
     nvs_flash_init();
     esp_netif_init();    
-    
+    void * func = ieee80211_raw_frame_sanity_check;
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());

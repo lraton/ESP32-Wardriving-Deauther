@@ -177,8 +177,15 @@ esp_err_t PacketSender::probe(const MacAddr mac, const char* ssid,
 }
 
 esp_err_t PacketSender::raw(const uint8_t* packet, int32_t len, bool en_sys_seq) {
-    return esp_wifi_80211_tx(WIFI_IF_STA, packet, len, en_sys_seq);
+    return esp_wifi_80211_tx(WIFI_IF_AP, packet, len, en_sys_seq);
 }
+
+/*
+int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
+  return 0; //LA FUNZIONE IMPEDISCE DI MANDARE PACCHETTI "STRANI"
+}
+*/
+
 
 esp_err_t PacketSender::change_channel(uint8_t channel) {
     return esp32_deauther_configure_wifi(channel);
