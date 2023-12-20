@@ -135,7 +135,7 @@ esp_netif_t *wifi_init_softap(void)
     }
 
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_ap_config));
-
+    ESP_LOGI(TAG_AP,"Channel %d",EXAMPLE_ESP_WIFI_CHANNEL);
     ESP_LOGI(TAG_AP, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
              EXAMPLE_ESP_WIFI_AP_SSID, EXAMPLE_ESP_WIFI_AP_PASSWD, EXAMPLE_ESP_WIFI_CHANNEL);
 
@@ -195,6 +195,7 @@ void start_ap_sta(void)
     /* Initialize AP */
     ESP_LOGI(TAG_AP, "ESP_WIFI_MODE_AP");
     esp_netif_t *esp_netif_ap = wifi_init_softap();
+
 
     /* Initialize STA */
     ESP_LOGI(TAG_STA, "ESP_WIFI_MODE_STA");
