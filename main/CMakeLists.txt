@@ -1,7 +1,7 @@
 idf_component_register(
     SRCS
-    "main.cpp" "packet.cpp"
-    "configure_wifi.c"
+    "main.cpp"
+    "deauth.cpp"
     INCLUDE_DIRS
     "."
 )

