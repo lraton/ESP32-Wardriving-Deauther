@@ -1,7 +1,7 @@
 idf_component_register(
     SRCS
-    "main.cpp"
-    "deauth.cpp"
+    "main.c"
+    "deauth.c"
     INCLUDE_DIRS
     "."
 )

@@ -1,19 +1,15 @@
-extern "C" {
+
 #include "freertos/FreeRTOS.h"
 
 #include "esp_system.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
 #include "esp_netif.h"
-
 #include "nvs_flash.h"
 #include <time.h>
-}
-#include "deauth.hpp"
-
+#include "deauth.h"
+#include <string.h>
 #include "esp_log.h"
-#include <cstring>
-
 
 #define TASK_NAME "spam_task"
 
@@ -170,7 +166,7 @@ void scanWifi(void *pvParameter){
         uint16_t maxAP = 15; //arbitrary number max APs stored
         esp_wifi_scan_get_ap_num(&maxAP);
         uint16_t AP_num = maxAP;
-        apRecords = new wifi_ap_record_t[maxAP];
+        wifi_ap_record_t apRecords[maxAP];
         esp_wifi_scan_get_ap_records(&maxAP , apRecords);
         
         for(int i=0;i < AP_num;i++){
@@ -196,7 +192,7 @@ void scanWifi(void *pvParameter){
     }
 }
 
-extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
+int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
   return 0; //LA FUNZIONE IMPEDISCE DI MANDARE PACCHETTI "STRANI"
 }
 
@@ -271,7 +267,7 @@ void attack_method_rogueap(wifi_ap_record_t *ap_record){
 }
 
 
-extern "C" void app_main(void) {
+void app_main(void) {
     srand(time(NULL));
 
     
