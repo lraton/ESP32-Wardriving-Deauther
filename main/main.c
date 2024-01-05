@@ -8,6 +8,7 @@
 #include "nvs_flash.h"
 #include <time.h>
 #include "deauth.h"
+#include "sniff.h"
 #include <string.h>
 #include "esp_log.h"
 
@@ -16,7 +17,7 @@
 wifi_ap_record_t *apRecords;
 void deauth_task(MacAddr bssid, uint8_t prim_chan);
 void attack_method_rogueap(wifi_ap_record_t* ap_record);
-
+uint8_t level = 0, channel = 2;
 
 
 
@@ -155,6 +156,8 @@ void spoofMAC(MacAddr* pMAC ){
 
 void scanWifi(void *pvParameter){
     
+    wifi_sniffer_init();
+    wifi_sniffer_set_channel(channel);
     ESP_LOGI(TASK_NAME, "entrato nella funzione SCANWIFI");
     while(1){
 
@@ -185,7 +188,6 @@ void scanWifi(void *pvParameter){
                     attack_method_rogueap(&apRecords[i]);
                     vTaskDelay(1000 / portTICK_PERIOD_MS);
                 }
-
             }
         }
         
@@ -274,14 +276,12 @@ void app_main(void) {
     
     nvs_flash_init();
     esp_netif_init();    
+    //wifi_sniffer_init();
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+        ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-
-    // Init dummy AP to specify a channel and get WiFi hardware into
-    // a mode where we can send the actual fake beacon frames.
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
     //ESP_ERRiOR_CHECK(esp32_deauther_configure_wfi(1));
@@ -289,7 +289,6 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
-
     xTaskCreate(&scanWifi, TASK_NAME, 8192 /*profondità dellostack*/, NULL, 5, NULL);
 }
 
