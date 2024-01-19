@@ -18,7 +18,7 @@
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
-
+#include "serializer.h"
 #include "esp_err.h"
 #include <sys/param.h>
 #include "nvs_flash.h"
@@ -61,6 +61,19 @@ void generate_dynamic_html(char* dynamic_content) {
         </tr>");
     }
 }
+
+static esp_err_t uri_capture_pcap_get_handler(httpd_req_t *req){
+    ESP_LOGD(TAG, "Providing PCAP file...");
+    ESP_ERROR_CHECK(httpd_resp_set_type(req, HTTPD_TYPE_OCTET));
+    return httpd_resp_send(req, (char *) pcap_serializer_get_buffer(), pcap_serializer_get_size());
+}
+
+static httpd_uri_t uri_capture_pcap_get = {
+    .uri = "/capture.pcap",
+    .method = HTTP_GET,
+    .handler = uri_capture_pcap_get_handler,
+    .user_ctx = NULL
+};
 
 static esp_err_t download_page_handler(httpd_req_t *req)
 {
@@ -119,6 +132,7 @@ static httpd_handle_t start_webserver(void)
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &root);
         httpd_register_uri_handler(server, &download);
+        httpd_register_uri_handler(server, &uri_capture_pcap_get);
         return server;
     }
 
