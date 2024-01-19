@@ -368,6 +368,44 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# SoftAP-Station Configuration
+#
+
+#
+# SoftAP Configuration
+#
+
+#
+# SoftAP Configuration
+#
+CONFIG_ESP_WIFI_AP_SSID="myssid"
+CONFIG_ESP_WIFI_AP_PASSWORD="mypassword"
+CONFIG_ESP_WIFI_AP_CHANNEL=1
+CONFIG_ESP_MAX_STA_CONN_AP=4
+# end of SoftAP Configuration
+
+#
+# STA Configuration
+#
+
+#
+# STA Configuration
+#
+CONFIG_ESP_WIFI_REMOTE_AP_SSID="otherapssid"
+CONFIG_ESP_WIFI_REMOTE_AP_PASSWORD="otherappassword"
+CONFIG_ESP_MAXIMUM_STA_RETRY=5
+# CONFIG_ESP_WIFI_AUTH_OPEN is not set
+# CONFIG_ESP_WIFI_AUTH_WEP is not set
+# CONFIG_ESP_WIFI_AUTH_WPA_PSK is not set
+CONFIG_ESP_WIFI_AUTH_WPA2_PSK=y
+# CONFIG_ESP_WIFI_AUTH_WPA_WPA2_PSK is not set
+# CONFIG_ESP_WIFI_AUTH_WPA3_PSK is not set
+# CONFIG_ESP_WIFI_AUTH_WPA2_WPA3_PSK is not set
+# CONFIG_ESP_WIFI_AUTH_WAPI_PSK is not set
+# end of STA Configuration
+# end of SoftAP-Station Configuration
+
+#
 # Compiler options
 #
 CONFIG_COMPILER_OPTIMIZATION_DEBUG=y

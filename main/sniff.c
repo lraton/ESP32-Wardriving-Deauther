@@ -8,7 +8,7 @@
 #include "driver/gpio.h"
 #include <arpa/inet.h>
 #include "sniff.h"
-
+#include "serializer.h"
 #define TAG "DEBUG"
 #define IMP "IMPORTANT"
 
@@ -112,7 +112,9 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
   for (int i = 0; i < 6; i++) {
     ESP_LOGI("SORG", "%02X ,%02X",data->mac_header.addr1[i],data->mac_header.addr2[i]);
   }
-  ESP_LOGI(IMP, "got an Eapol-key-packet : %0x",*(((unsigned int*)eapol_key_packet)));
+  ESP_LOGI("IMP", "got an Eapol-key-packet");
+  pcap_serializer_append_frame(frame->payload, frame->rx_ctrl.sig_len, frame->rx_ctrl.timestamp);
+  
 }
 
 
