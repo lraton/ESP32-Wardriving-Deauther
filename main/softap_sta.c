@@ -75,11 +75,18 @@
 
 static const char *TAG_AP = "WiFi SoftAP";
 static const char *TAG_STA = "WiFi Sta";
+static const char *TAG = "WIFI copiato lol ahaah";
 
 static int s_retry_num = 0;
 
 /* FreeRTOS event group to signal when we are connected/disconnected */
 static EventGroupHandle_t s_wifi_event_group;
+
+static uint8_t original_mac_ap[6];
+static bool wifi_init = false;  //serve per evitare di inizializzare più volte il wifi
+
+
+
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data)
@@ -204,4 +211,54 @@ void start_ap_sta(void)
     /* Start WiFi */
     ESP_ERROR_CHECK(esp_wifi_start());
 
+}
+
+
+static void wifi_init_apsta(void){
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    esp_netif_create_default_wifi_ap();
+    esp_netif_create_default_wifi_sta();
+
+    wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
+
+    ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
+
+    // save original AP MAC address
+    ESP_ERROR_CHECK(esp_wifi_get_mac(WIFI_IF_AP, original_mac_ap));
+
+    ESP_ERROR_CHECK(esp_wifi_start());
+    wifi_init = true;
+}
+
+void wifictl_restore_ap_mac(void){
+    ESP_LOGD(TAG, "Restoring original AP MAC address...");
+    ESP_ERROR_CHECK(esp_wifi_set_mac(WIFI_IF_AP, original_mac_ap));
+}
+
+void wifictl_mgmt_ap_start(void){
+    wifi_config_t mgmt_wifi_config = {
+        .ap = {
+            .ssid = "prosciutto wifi",
+            .ssid_len = 15,
+            .password = "prosciutto",
+            .max_connection = 8,
+            .authmode = WIFI_AUTH_WPA2_PSK
+        },
+    };
+    wifictl_ap_start(&mgmt_wifi_config);
+}
+
+void wifictl_ap_start(wifi_config_t *wifi_config) {
+    ESP_LOGD(TAG, "Starting AP...");
+    if(!wifi_init){
+        wifi_init_apsta();
+    }
+
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, wifi_config));
+    ESP_LOGI(TAG, "AP started with SSID=%s", wifi_config->ap.ssid);
 }

