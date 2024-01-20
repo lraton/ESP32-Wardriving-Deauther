@@ -23,6 +23,13 @@ void main_deauth();
 esp_netif_t *wifi_init_softap(void);
 esp_netif_t *wifi_init_sta(void);
 
+wifi_ap_record_t *getAPrecords();
+uint16_t get_AP_num();
+bool get_scan();
+void set_scan();
+void attack_ssid(char*);
+
+
 void wifictl_restore_ap_mac(void);
 void wifictl_mgmt_ap_start(void);
 void wifictl_ap_start(wifi_config_t *);

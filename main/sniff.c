@@ -17,7 +17,8 @@ uint8_t level = 0, channel = 2;
 
 void wifi_sniffer_init(void)
 {
- esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
+  ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
+  esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
 }
 
 void wifi_sniffer_set_channel(uint8_t channel)

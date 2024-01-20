@@ -13,6 +13,7 @@
 */
 #include <string.h>
 #include "lib.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
@@ -31,6 +32,7 @@
 #endif
 #include "lwip/err.h"
 #include "lwip/sys.h"
+
 
 /* The examples use WiFi configuration that you can set via project configuration menu.
 
@@ -75,7 +77,7 @@
 
 static const char *TAG_AP = "WiFi SoftAP";
 static const char *TAG_STA = "WiFi Sta";
-static const char *TAG = "WIFI copiato lol ahaah";
+static const char *TAG = "WIFI INIT FUNZIONANTE";
 
 static int s_retry_num = 0;
 
@@ -87,10 +89,8 @@ static bool wifi_init = false;  //serve per evitare di inizializzare più volte 
 
 
 
-
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
-                               int32_t event_id, void *event_data)
-{
+                               int32_t event_id, void *event_data){
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STACONNECTED)
     {
         wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *)event_data;
@@ -118,8 +118,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 /* Initialize soft AP */
-esp_netif_t *wifi_init_softap(void)
-{
+esp_netif_t *wifi_init_softap(void){
     esp_netif_t *esp_netif_ap = esp_netif_create_default_wifi_ap();
 
     wifi_config_t wifi_ap_config = {
@@ -150,8 +149,7 @@ esp_netif_t *wifi_init_softap(void)
 }
 
 /* Initialize wifi station */
-esp_netif_t *wifi_init_sta(void)
-{
+esp_netif_t *wifi_init_sta(void){
     esp_netif_t *esp_netif_sta = esp_netif_create_default_wifi_sta();
 
     wifi_config_t wifi_sta_config = {
@@ -172,8 +170,7 @@ esp_netif_t *wifi_init_sta(void)
     return esp_netif_sta;
 }
 
-void start_ap_sta(void)
-{
+void start_ap_sta(void){
     ESP_ERROR_CHECK(esp_netif_init());
     //ESP_ERROR_CHECK(esp_event_loop_create_default());
 
