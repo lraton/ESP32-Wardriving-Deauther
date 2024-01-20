@@ -18,7 +18,10 @@
 
 void start_ap_sta();
 void start_http_server();
-void main_deauth();
+void wardriver_init(void);
+char* decodeUrl(const char* encodedUrl);
+char hexToChar(char c1, char c2);
+int isHexDigit(char c);
 
 esp_netif_t *wifi_init_softap(void);
 esp_netif_t *wifi_init_sta(void);

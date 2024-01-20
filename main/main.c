@@ -20,7 +20,7 @@ void app_main(void) {
     wifictl_mgmt_ap_start();
     //wifictl_restore_ap_mac(); 
     
-    main_deauth(); //Start deauth
+    wardriver_init(); //Start deauth
     
     start_http_server(); //Start HTTP 
 

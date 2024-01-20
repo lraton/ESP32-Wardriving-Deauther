@@ -6,6 +6,8 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "lib.h"
 #include "freertos/FreeRTOS.h"
@@ -27,6 +29,9 @@
 
 
 static const char *TAG = "webserver";
+char* dynamic_content = NULL;
+
+
 char* get_auth_mode(int authmode)
 {
     switch (authmode) {
@@ -73,8 +78,17 @@ static esp_err_t main_page_handler(httpd_req_t *req)
 	esp_err_t error;
     set_scan();
     ESP_LOGI(TAG,"%d", get_scan());
-    char* dynamic_content = (char *) malloc(sizeof(char)* 6144);
+
+    if(dynamic_content == NULL){
+        dynamic_content = (char *) malloc(sizeof(char) * 6144);
+    }
+    else{
+        dynamic_content = (char *) realloc(dynamic_content,sizeof(char) * 6144);
+    }
+
+
     // Generate dynamic HTML content
+    
     generate_dynamic_html(dynamic_content);
 	error = httpd_resp_send(req, dynamic_content, HTTPD_RESP_USE_STRLEN);
 	if (error != ESP_OK)
@@ -96,9 +110,12 @@ void generate_dynamic_html(char* dynamic_content) {
     //roba da stampare
     //apRecords[i].ssid
     //apRecords[i].authmode
+    while(apRecords==NULL){
+        ESP_LOGI(TAG, "waiting for aprecords");
+    }
     snprintf(dynamic_content, 2048,
-              "<html> <head> <style> table, th, td { width: 100%%; border: 1px solid black; } table { min-height:70vh ; font-size: 2em; } </style> </head> <body> <h1>ESP32 WEBSERVER</h1> <table> <tr><th><a href=\"captureall.pcap\">Download All</a></th> </tr> <br> <tr> <th>SSID</th> <th>AuthMode</th> <th>Coordinate</th> <th>Download</th> </tr>");
-    ESP_LOGI(TAG,"//////%s//////", apRecords[0].ssid);
+              "<html> <head> <style> table, th, td { width: 100%%; border: 1px solid black; } table { min-height:70vh ; font-size: 2em; } </style> </head> <body> <h1>ESP32 WEBSERVER</h1> <table> <tr><th><a href=\"captureall.pcap\">Download All</a></th> </tr> <br> <tr> <th>SSID</th> <th>AuthMode</th> <th>Coordinate</th> <th>Attack</th> </tr>");
+    
     ESP_LOGI(TAG, "Num_ssid %d",num_ssid);
     for (int i=0; i<num_ssid;i++){
         authmode= get_auth_mode(apRecords[i].authmode);
@@ -111,7 +128,7 @@ void generate_dynamic_html(char* dynamic_content) {
             <td>x-y-z</td>\
             <td><a href=\"download.pcap?");
         strcat(dynamic_content, (char*)apRecords[i].ssid);
-        strcat(dynamic_content,"\">Download</a></td>\
+        strcat(dynamic_content,"\">Attack</a></td>\
         </tr>");
     }
     strcat(dynamic_content, "<button onclick=\"location.href=\'new-scan\'\" type=\"button\">\
@@ -165,17 +182,20 @@ static esp_err_t download_page_handler(httpd_req_t *req)
 {
 
     ESP_LOGI(TAG, "req->uri PRESO DA DOWNLOAD.PCAP: %s", (char*)req->uri);
-
+    set_scan();
     uint8_t len_uri = strlen((char*)req->uri) + 1;
     ESP_LOGI(TAG,"%d",len_uri );
     //uint8_t len_uri_tagliare = strlen("/download.pcap?");
     //uint8_t len_ssid = len_uri - len_uri_tagliare;
-    
-    char* ssid;
-    //strcpy(ssid,(char*)req->uri);
-    ssid = strremove(req->uri,"/download.pcap?");
-
-    attack_ssid(ssid);
+    if(len_uri>15){
+        char* encodedUrl;
+        //strcpy(ssid,(char*)req->uri);
+        encodedUrl = strremove(req->uri,"/download.pcap?");
+        char* ssid = decodeUrl(encodedUrl);
+        ESP_LOGI(TAG, "SSID->%s", ssid);
+        attack_ssid(ssid);
+        free(ssid);
+    }
 
 	esp_err_t error;
 	const char *response = (const char *) req->user_ctx;
@@ -210,6 +230,37 @@ static const httpd_uri_t download = {
 </body>\
 </html>"
 };
+
+int isHexDigit(char c) {
+    return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'));
+}
+
+char hexToChar(char c1, char c2) {
+    char hex[3] = {c1, c2, '\0'};
+    return (char) strtol(hex, NULL, 16);
+}
+
+char* decodeUrl(const char* encodedUrl) {
+    int len = strlen(encodedUrl);
+    char* decodedUrl = (char*)malloc((len + 1) * sizeof(char));
+
+    int i = 0, j = 0;
+
+    while (i < len) {
+        if (encodedUrl[i] == '%' && isHexDigit(encodedUrl[i + 1]) && isHexDigit(encodedUrl[i + 2])) {
+            decodedUrl[j] = hexToChar(encodedUrl[i + 1], encodedUrl[i + 2]);
+            i += 3;
+        } else {
+            decodedUrl[j] = encodedUrl[i];
+            i++;
+        }
+        j++;
+    }
+
+    decodedUrl[j] = '\0';
+
+    return decodedUrl;
+}
 
 
 esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
