@@ -144,7 +144,7 @@ void generate_dynamic_html(char* dynamic_content) {
         strcat(dynamic_content, authmode);
         strcat(dynamic_content, "</td>\
             <td>x-y-z</td>\
-            <td><a href=\"download.pcap?");
+            <td><a href=\"attack?");
         strcat(dynamic_content, (char*)apRecords[i].ssid);
         strcat(dynamic_content,"\">Attack</a></td>\
         ");

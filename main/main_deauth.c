@@ -79,7 +79,9 @@ void scanWifi(){
     while(1){
         // ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
         if(scan){
-            ESP_ERROR_CHECK(esp_wifi_scan_start(NULL,true));
+            //ESP_ERROR_CHECK(esp_wifi_scan_start(NULL,true));
+            while(esp_wifi_scan_start(NULL,true)!=ESP_OK){ vTaskDelay(1000/portTICK_PERIOD_MS);}
+            vTaskDelay(1500 / portTICK_PERIOD_MS);
             apRecords = NULL;
             while(apRecords == NULL){
                     
@@ -172,7 +174,6 @@ void attack_method_rogueap(wifi_ap_record_t *ap_record){
 
 //inizializza il pcap_serializer e inizializza 1 thread per sniffare il traffico e 1 task per fare scanWifi()
 void wardriver_init(void) {
-    srand(time(NULL));
     pcap_serializer_init();
     wifi_sniffer_init();
     xTaskCreate(&scanWifi, TASK_NAME, 8192 /*profondità dellostack*/, NULL, 5, NULL);
