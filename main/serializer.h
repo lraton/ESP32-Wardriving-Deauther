@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+
+//struct di un header per i file .pcap
 typedef struct {
             uint32_t magic_number;   /* magic number */
             uint16_t version_major;  /* major version number */
@@ -10,6 +12,7 @@ typedef struct {
             uint32_t network;        /* data link type */
 } pcap_global_header_t;
 
+//struct di un header per i file .pcap
 typedef struct {
         uint32_t ts_sec;         /* timestamp seconds */
         uint32_t ts_usec;        /* timestamp microseconds */

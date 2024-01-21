@@ -15,6 +15,7 @@
 static wifi_country_t wifi_country = {.cc="CN", .schan = 1, .nchan = 13}; //Most recent esp32 library struct
 uint8_t level = 0, channel = 2;
 
+//set the if in promiscuous mode and assign the packet handler
 void wifi_sniffer_init(void)
 {
   ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
@@ -25,21 +26,7 @@ void wifi_sniffer_set_channel(uint8_t channel)
 {
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 }
-
-// void printByte(eapol_key_packet_t pkt)
-// {
-//   uint16_t numBytes = sizeof(pkt);
-//   ESP_LOGI("Block of %d bytes:\n", numBytes);
-//   for (int i = 0; i < numBytes; ++i) {
-     
-//     printf("%02X ", bytes[i]);
-//   }
-//   printf("\n");
-
-//   return 0;
-// }
-
-
+//1° filter eapol packets ->ETHER_TYPE_EAPOL 
 eapol_packet_t *parse_eapol_packet(data_frame_t *frame) {
   uint8_t *frame_buffer = frame->body;
 
@@ -66,23 +53,13 @@ eapol_packet_t *parse_eapol_packet(data_frame_t *frame) {
   }
   return NULL;
 }
-
+//2° filter eapol key packets 
 eapol_key_packet_t *parse_eapol_key_packet(eapol_packet_t *eapol_packet){
   if(eapol_packet->header.packet_type != EAPOL_KEY){
     ESP_LOGD(TAG, "Not an EAPoL-Key packet.");
     return NULL;
   }
   return (eapol_key_packet_t *) eapol_packet->packet_body;
-}
-
-const char * wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
-{
-  switch(type) {
-  case WIFI_PKT_MGMT: return "MGMT";
-  case WIFI_PKT_DATA: return "DATA";
-  default:  
-  case WIFI_PKT_MISC: return "MISC";
-  }
 }
 
 void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
@@ -93,30 +70,20 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
     return;
   }
 
-  // ESP_LOGI(TAG, "packet type : %s, channel : %d", wifi_sniffer_packet_type2str(type), channel);
-
-
   wifi_promiscuous_pkt_t *frame = (wifi_promiscuous_pkt_t *) buff;
   data_frame_t *data = (data_frame_t *) frame->payload;
   eapol_packet_t *eapol_packet = parse_eapol_packet((data_frame_t *) frame->payload);
   if(eapol_packet == NULL){
-    // ESP_LOGI(TAG, "Not an EAPOL packet.");
     return;
   }
   eapol_key_packet_t *eapol_key_packet = parse_eapol_key_packet(eapol_packet);
   if(eapol_key_packet == NULL){
-    // ESP_LOGV(TAG, "Not an EAPOL-Key packet");
     return;
   }
-  // ESP_ERROR_CHECK_WITHOUT_ABORT(esp_event_post(FRAME_ANALYZER_EVENTS, DATA_FRAME_EVENT_EAPOLKEY_FRAME, frame, sizeof(wifi_promiscuous_pkt_t) + frame->rx_ctrl.sig_len, portMAX_DELAY));
-  // printByte(eapol_key_packet);
-  for (int i = 0; i < 6; i++) {
-    ESP_LOGI("SORG", "%02X ,%02X",data->mac_header.addr1[i],data->mac_header.addr2[i]);
-  }
+  // for (int i = 0; i < 6; i++) {
+  //   ESP_LOGI("SORG", "%02X ,%02X",data->mac_header.addr1[i],data->mac_header.addr2[i]);
+  // }
   ESP_LOGI("IMP", "got an Eapol-key-packet");
   pcap_serializer_append_frame(frame->payload, frame->rx_ctrl.sig_len, frame->rx_ctrl.timestamp);
   
 }
-
-
-

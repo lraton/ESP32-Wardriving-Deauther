@@ -30,8 +30,9 @@
 
 static const char *TAG = "webserver";
 char* dynamic_content = NULL;
+void generate_dynamic_html(char* dynamic_content);
 
-
+//function to  remove a substring from a string
 char *strremove(char *str, const char *sub) {
     size_t len = strlen(sub);
     if (len > 0) {
@@ -43,6 +44,7 @@ char *strremove(char *str, const char *sub) {
     return str;
 }
 
+//returns a string for corresponding authmode
 char* get_auth_mode(int authmode)
 {
     switch (authmode) {
@@ -82,14 +84,15 @@ char* get_auth_mode(int authmode)
     }
 }
 
-void generate_dynamic_html(char* dynamic_content);
 
+//http request handler main page
 static esp_err_t main_page_handler(httpd_req_t *req)
 {
 	esp_err_t error;
     set_scan();
     ESP_LOGI(TAG,"%d", get_scan());
 
+    //allocation of dynamic content
     if(dynamic_content == NULL){
         dynamic_content = (char *) malloc(sizeof(char) * 6144);
     }
@@ -110,20 +113,24 @@ static esp_err_t main_page_handler(httpd_req_t *req)
 	return error;
 }
 
+static const httpd_uri_t root = {
+    .uri       = "/",
+    .method    = HTTP_GET,
+    .handler   = main_page_handler,
+    .user_ctx  = NULL
+};
 void generate_dynamic_html(char* dynamic_content) {
     // Format the HTML dynamically based on variables
     
     wifi_ap_record_t* apRecords = getAPrecords();
-    
     uint16_t num_ssid = get_AP_num();
     
     char* authmode;
-    //roba da stampare
-    //apRecords[i].ssid
-    //apRecords[i].authmode
     while(apRecords==NULL){
         ESP_LOGI(TAG, "waiting for aprecords");
     }
+
+    //--------------HTML---------------------// 
     snprintf(dynamic_content, 2048,
               "<html> <head> <style> table, th, td { width: 100%%; border: 1px solid black; } table { min-height:70vh ; font-size: 2em; } </style> </head> <body> <h1>ESP32 WEBSERVER</h1> <h2>Press attack to attack the network, during the attack ESP32 AP will be down make sure to reconnect and press download</h2><table> <tr><th><a href=\"capture.pcap\">Download All</a></th> </tr> <br> <tr> <th>SSID</th> <th>AuthMode</th> <th>Coordinate</th> <th>Attack</th> <th>DoS Attack</th> </tr>");
     
@@ -148,6 +155,7 @@ void generate_dynamic_html(char* dynamic_content) {
     }
 }
 
+//HTTP request handler for /dos
 static esp_err_t uri_dos_handler(httpd_req_t *req){
 
     ESP_LOGI(TAG, "req->uri PRESO DA Attack DoS: %s", (char*)req->uri);
@@ -173,22 +181,20 @@ static esp_err_t uri_dos_handler(httpd_req_t *req){
 	return error;
     
 }
-
 static httpd_uri_t uri_dos = {
     .uri = "/dos",
     .method = HTTP_GET,
     .handler = uri_dos_handler,
-    .user_ctx = "<h1>GET dossed nigger</h2>"
+    .user_ctx = "<h1>GET dossed</h2>"
     
 };
 
-
+//HTTP request handler for /capure.pcap -> DOWNLOAD .pcap
 static esp_err_t uri_capture_pcap_get_handler(httpd_req_t *req){
     ESP_LOGD(TAG, "Providing PCAP file...");
     ESP_ERROR_CHECK(httpd_resp_set_type(req, HTTPD_TYPE_OCTET));
     return httpd_resp_send(req, (char *) pcap_serializer_get_buffer(), pcap_serializer_get_size());
 }
-
 static httpd_uri_t uri_capture_pcap_get = {
     .uri = "/capture.pcap",
     .method = HTTP_GET,
@@ -199,23 +205,19 @@ static httpd_uri_t uri_capture_pcap_get = {
 
 
 
-static esp_err_t download_page_handler(httpd_req_t *req)
+static esp_err_t attack_handler(httpd_req_t *req)
 {
 
-    ESP_LOGI(TAG, "req->uri PRESO DA DOWNLOAD.PCAP: %s", (char*)req->uri);
+    ESP_LOGI(TAG, "req->uri PRESO DA attack: %s", (char*)req->uri);
     uint8_t len_uri = strlen((char*)req->uri) + 1;
     ESP_LOGI(TAG,"%d",len_uri );
-    //uint8_t len_uri_tagliare = strlen("/download.pcap?");
-    //uint8_t len_ssid = len_uri - len_uri_tagliare;
-    if(len_uri>15){
-        char* encodedUrl;
-        //strcpy(ssid,(char*)req->uri);
-        encodedUrl = strremove(req->uri,"/dos?");
-        char* ssid = decodeUrl(encodedUrl);
-        ESP_LOGI(TAG, "SSID->%s", ssid);
-        attack_ssid(ssid);
-        free(ssid);
-    }
+    char* encodedUrl;
+    //strcpy(ssid,(char*)req->uri);
+    encodedUrl = strremove(req->uri,"/attack?");
+    char* ssid = decodeUrl(encodedUrl);
+    ESP_LOGI(TAG, "SSID->%s", ssid);
+    attack_ssid(ssid);
+    free(ssid);
 
 	esp_err_t error;
 	const char *response = (const char *) req->user_ctx;
@@ -227,18 +229,11 @@ static esp_err_t download_page_handler(httpd_req_t *req)
 	else ESP_LOGI(TAG, "Response sent Successfully");
 	return error;
 }
-
-static const httpd_uri_t root = {
-    .uri       = "/",
+//HTTP request handler for attack
+static const httpd_uri_t attack = {
+    .uri       = "/attack",
     .method    = HTTP_GET,
-    .handler   = main_page_handler,
-    .user_ctx  = NULL
-};
-
-static const httpd_uri_t download = {
-    .uri       = "/download.pcap",
-    .method    = HTTP_GET,
-    .handler   = download_page_handler,
+    .handler   = attack_handler,
     .user_ctx  = "<!DOCTYPE html>\
 <html>\
 <head>\
@@ -250,6 +245,9 @@ static const httpd_uri_t download = {
 </body>\
 </html>"
 };
+
+
+
 
 int isHexDigit(char c) {
     return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'));
@@ -282,7 +280,7 @@ char* decodeUrl(const char* encodedUrl) {
     return decodedUrl;
 }
 
-
+//HTTP 404 error 
 esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
 {
     /* For any other URI send 404 and close socket */
@@ -302,7 +300,7 @@ static httpd_handle_t start_webserver(void)
         // Set URI handlers
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &root);
-        httpd_register_uri_handler(server, &download);
+        httpd_register_uri_handler(server, &attack);
         httpd_register_uri_handler(server, &uri_capture_pcap_get);
         httpd_register_uri_handler(server, &uri_dos);
         return server;
@@ -327,7 +325,7 @@ static void disconnect_handler(void* arg, esp_event_base_t event_base,int32_t ev
         *server = NULL;
     }
 }
-
+//starts webserver on STA connection 
 static void connect_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void* event_data)
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
@@ -337,21 +335,11 @@ static void connect_handler(void* arg, esp_event_base_t event_base,int32_t event
     }
 }
 
-
+//Starts http server by assigning a connection handler
 void start_http_server(void)
 {
 	static httpd_handle_t server = NULL;
-
-    // //Initialize NVS
-    // esp_err_t ret = nvs_flash_init();
-    // if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    //   ESP_ERROR_CHECK(nvs_flash_erase());
-    //   ret = nvs_flash_init();
-    // }
-    // ESP_ERROR_CHECK(ret);
     ESP_LOGI(TAG, "ESP_HTTP_SERVER");
-
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
-//    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
 }

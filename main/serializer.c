@@ -1,4 +1,5 @@
-
+//questo file contiene le funzioni per convertire dei raw bytes catturati in un file 
+//di tipo .pcap cosi' da poter essere ispezionato con wireshark
 #include <stdint.h>
 #include <string.h>
 #include "esp_log.h"
@@ -10,7 +11,7 @@
 
 
 #define SNAPLEN 65535
-#define PCAP_MAGIC_NUMBER 0xa1b2c3d4
+#define PCAP_MAGIC_NUMBER 0xa1b2c3d4 //magic number del file di tipo .pcap
 
 
 #define LINKTYPE_IEEE802_11 105
@@ -18,8 +19,10 @@
 static unsigned pcap_size = 0;
 static uint8_t *pcap_buffer = NULL;
 
+
+//inizializza un buffer globale con un header di tipo .pcap
 uint8_t *pcap_serializer_init(){
-    // Make sure memory from previous attack is freed
+    //liberiamo memoria prima di allocarla, tante volte ci fossero byte 
     free(pcap_buffer);
     // Ref: https://gitlab.com/wireshark/wireshark/-/wikis/Development/LibpcapFileFormat#global-header
     pcap_global_header_t pcap_global_header = {
@@ -37,6 +40,8 @@ uint8_t *pcap_serializer_init(){
     return pcap_buffer;
 }
 
+//aggiunge al buffer globale precedentemente creato con pcap_serializer_init() un altro header
+//per i .pcap e gli appende pure i raw bytes della cattura
 void pcap_serializer_append_frame(const uint8_t *buffer, unsigned size, unsigned ts_usec){
     if(size == 0){
         ESP_LOGD(TAG, "Frame size is 0. Not appending anything.");
@@ -67,16 +72,22 @@ void pcap_serializer_append_frame(const uint8_t *buffer, unsigned size, unsigned
     pcap_size += sizeof(pcap_record_header_t) + size;
 }
 
+
+//libera memoria del buffer
 void pcap_serializer_deinit(){
     free(pcap_buffer);
     pcap_buffer = NULL;
     pcap_size = 0;
 }
 
+
+//ritorna la grandezza del buffer
 unsigned pcap_serializer_get_size(){
     return pcap_size;
 }
 
+//ritorna puntatore al buffer .pcap
+//viene chiamata quando si prova a scaricare il .pcap dal webserver
 uint8_t* pcap_serializer_get_buffer(){
     return pcap_buffer;
 }

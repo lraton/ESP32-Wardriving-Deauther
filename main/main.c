@@ -15,10 +15,8 @@ void app_main(void) {
     nvs_flash_init();   //inizializza memoria flash
     esp_netif_init();   //inizializza interfaccia di rete
     ESP_ERROR_CHECK(esp_event_loop_create_default());  //runna all' infinito (come arduino Loop)   
-    //start_ap_sta(); //Start AP and STA
 
     wifictl_mgmt_ap_start(); //inizializza il controller wifi in modalita' APSTA
-    //wifictl_restore_ap_mac(); 
     
     wardriver_init(); //inizializza la task di Deauth, di packet sniffing, e di serializzazione pcap
     

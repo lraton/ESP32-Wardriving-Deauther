@@ -34,16 +34,7 @@ typedef struct {
     uint8_t htc_order:1;
 } frame_control_t;
 
-typedef struct {
-  unsigned frame_ctrl:16;
-  unsigned duration_id:16;
-  uint8_t addr1[6]; /* receiver address */
-  uint8_t addr2[6]; /* sender address */
-  uint8_t addr3[6]; /* filtering address */
-  unsigned sequence_ctrl:16;
-  //uint8_t addr4[6]; /* optional */
-} wifi_ieee80211_mac_hdr_t;
-
+//mac header
 typedef struct {
     frame_control_t frame_control;
     uint16_t duration;
@@ -52,18 +43,19 @@ typedef struct {
     uint8_t addr3[6];
     uint16_t sequence_control;
 } data_frame_mac_header_t;
+//eapol header 
 typedef struct {
 	uint8_t version;
 	uint8_t packet_type;
 	uint16_t packet_body_length;
 } eapol_packet_header_t;
-
+//eapol packet
 typedef struct {
 	eapol_packet_header_t header;
 	uint8_t packet_body[];
 } eapol_packet_t;
 
-
+//logical link control header 
 typedef struct {
     uint8_t snap_dsap;
     uint8_t snap_ssap;
@@ -71,11 +63,7 @@ typedef struct {
     uint8_t encapsulation[3];
 } llc_snap_header_t;
 
-typedef struct {
-  wifi_ieee80211_mac_hdr_t hdr;
-  uint8_t payload[0]; /* network data ended with 4 bytes csum (CRC32) */
-} wifi_ieee80211_packet_t;
-
+//generic data frame
 typedef struct {
     data_frame_mac_header_t mac_header;
     uint8_t body[];
@@ -96,6 +84,7 @@ typedef struct {
     uint8_t :2;
 } key_information_t;
 
+//pacchetto eapol key 
 typedef struct __attribute__((__packed__)) {
     uint8_t descriptor_type;
     key_information_t key_information;
