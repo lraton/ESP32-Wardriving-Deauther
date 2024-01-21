@@ -68,11 +68,14 @@ void attack_ssid(char* ssid){
             vTaskDelay(1000/portTICK_PERIOD_MS);
         }
         if(!strcmp((char*)apRecords[n].ssid, ssid)){
-            for(int u = 0; u < 3; u++){
-                ESP_LOGI(TASK_NAME, "entering DEAUTH_TASK%d\n",u);
-                deauth_task(apRecords[n].bssid,apRecords[n].primary);
-                attack_method_rogueap(&apRecords[n]);
-                vTaskDelay(1000 / portTICK_PERIOD_MS);
+            for(int u = 0; u < 4; u++){
+                if(apRecords != NULL){
+                    ESP_LOGI(TASK_NAME, "entering DEAUTH_TASK%d\n",u);
+                    deauth_task(apRecords[n].bssid,apRecords[n].primary);
+                    attack_method_rogueap(&apRecords[n]);
+                    vTaskDelay(1000 / portTICK_PERIOD_MS);
+                }
+
             }
         }
     }
@@ -86,13 +89,12 @@ void scanWifi(){
     while(1){
         // ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
         if(scan){
-            esp_err_t scanErr = esp_wifi_scan_start(NULL,true);
+            ESP_ERROR_CHECK(esp_wifi_scan_start(NULL,true));
             apRecords = NULL;
             while(apRecords == NULL){
-                if(scanErr != ESP_OK){
-                    scanErr = esp_wifi_scan_start(NULL,true);
-                }
-                uint16_t maxAP = 15; //arbitrary number max APs stored
+                    
+
+                uint16_t maxAP; //arbitrary number max APs stored
                 esp_wifi_scan_get_ap_num(&maxAP);
                 AP_num = maxAP;
                 wifi_ap_record_t apRecords_tmp[maxAP];
@@ -157,7 +159,7 @@ uint8_t strlen_uint8(uint8_t *str){
 
 void attack_method_rogueap(wifi_ap_record_t *ap_record){
     ESP_LOGD(TASK_NAME, "Configuring Rogue AP");
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+    //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_mac(WIFI_IF_AP, ap_record->bssid));
     wifi_config_t ap_config = {};
     ap_config.ap.ssid_len = strlen_uint8((uint8_t *)ap_record->ssid);
