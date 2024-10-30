@@ -1,3 +1,3 @@
-# ESP32-Wardriving-Deauther-Bistarelli
+# ESP32-Wardriving-Deauther
 
-Progetto Sicurezza Informatica esp32 deautentica e cattura handshake wifi
+Project Cyber Security esp32 deauther and captures wifi handshakes
